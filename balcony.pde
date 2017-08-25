@@ -17,6 +17,8 @@ ControlP5 cp5;
 Chart brainWaveChart;
 
 //osc
+OscP5 oscP5;
+
 
 
 void setup() {
@@ -39,12 +41,15 @@ void setup() {
   cp5.addButton("TriggerAbnormal")
     .setPosition(10, 60)
     .setSize(200, 20);
+
+  //osc
+  oscP5 = new OscP5(this, 5001);
 }
 
 
 void draw() {
   background(255);
-  brainWaveChart.push("brainWave", random(0, 1));
+
 
   if (planeFadingIn && planeAlpha < 255) {
     planeAlpha += fadeStep;
@@ -57,15 +62,6 @@ void draw() {
       triggered = false;
     }
   }
-
-  //if (normalFadingIn && normalAlpha < 255) {
-  //  normalAlpha += fadeStep;
-  //  normal.loop();
-  //}
-  //if (normalFadingOut && normalAlpha > 0) {
-  //  normalAlpha -= fadeStep;
-  //  if (normalAlpha <=0)normal.stop();
-  //}
 
   if (millis()-triggeredTime > 12000) {
     normalFadingIn = true;
@@ -85,12 +81,28 @@ void movieEvent(Movie m) {
 
 void controlEvent(ControlEvent e) {
   if (e.isFrom("TriggerAbnormal")) {
-    if (!triggered)triggeredTime = millis();
-    triggered = true;
-    //normalFadingIn = false;
-    //normalFadingOut = true;
-    planeFadingIn = true;
-    planeFadingOut = false;
-    plane.play();
+    trigger();
   }
+}
+
+void oscEvent(OscMessage m) {
+  //  println(m.addrPattern());
+  //  println("---");
+  if (m.checkAddrPattern("/muse/elements/experimental/concentration")) {
+    float incomevalue = m.get(0).floatValue();
+    if (incomevalue>0.9) {
+      trigger();
+    }
+    brainWaveChart.push("brainWave", incomevalue);
+  }
+}
+
+void trigger () {
+  if (!triggered)triggeredTime = millis();
+  triggered = true;
+  //normalFadingIn = false;
+  //normalFadingOut = true;
+  planeFadingIn = true;
+  planeFadingOut = false;
+  plane.play();
 }
